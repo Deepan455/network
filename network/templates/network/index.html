@@ -1,0 +1,17 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    <div id="create_post">
+        <form method="post" action="{% url 'upload' %}">
+            {% csrf_token %}
+            <input type="textbox" name="content">
+            <input type="submit">
+        </form>
+    </div>
+
+    {% for item in post %}
+        <div class="post"><span class="creator">{{item.creator}}</span>{{item.content}}<div class="timestamp">{{item.timestamp}}<div class="actions">{{item.likes}}</div></span></div></div>
+  
+    {% endfor %}
+
+{% endblock %}
