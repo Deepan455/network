@@ -1,0 +1,49 @@
+{% extends "network/layout.html" %}
+{% block body %}
+	<h1 class="user_name">{{name}}</h1>
+	{{email}}
+
+
+	<!--To display the following-->
+	<h2>Following</h2>
+	<ul>
+	{% for spam in following %}
+		<li>{{spam.username}}</li>
+	{% endfor %}
+	</ul>
+
+	<!--Floow button-->
+	{% if profile in my_following %}
+		<div class="follow" data-add="unollow">Unfollow</div>
+	{% else %}
+		<div class="follow" data-add="follow">Follow</div>
+	{% endif %}
+
+	<!--To display the followers-->
+	<h2>Followers</h2>
+	<ul>
+	{% for eggs in followers %}
+		<li>{{eggs.username}}</li>
+	{% endfor %}
+	</ul>
+
+	{% for item in post %}
+        <div class="post">
+        	<span style="display:None" id="post_id">{{item.id}}</span>
+        	<a href="/profile/{{item.creator}}">
+        		<span class="creator">{{item.creator}}</span>
+        	</a>
+        	{{item.content}}
+        	<div class="timestamp">{{item.timestamp}}</div>
+        	{%if item in my_liked%}
+        		<div class="actions" data-press="{{item.id}}" data-status="liked" id="liked">{{item.likes}}</div>
+        	{% else %}
+        		<div class="actions" data-press="{{item.id}}" data-status="not_liked" id="not_liked">{{item.likes}}</div>  		
+        	{% endif %}
+        </div>
+  
+    {% endfor %}
+    {% for me in my_liked %}
+    	{{me.id}}
+    {% endfor %}
+{% endblock %}

@@ -10,7 +10,19 @@
     </div>
 
     {% for item in post %}
-        <div class="post"><span class="creator">{{item.creator}}</span>{{item.content}}<div class="timestamp">{{item.timestamp}}<div class="actions">{{item.likes}}</div></span></div></div>
+        <div class="post">
+            <span style="display:None" id="post_id">{{item.id}}</span>
+            <a href="/profile/{{item.creator}}">
+                <span class="creator">{{item.creator}}</span>
+            </a>
+            {{item.content}}
+            <div class="timestamp">{{item.timestamp}}</div>
+            {%if item in my_liked%}
+                <div class="actions" data-press="{{item.id}}" data-status="liked" id="liked">{{item.likes}}</div>
+            {% else %}
+                <div class="actions" data-press="{{item.id}}" data-status="not_liked" id="not_liked">{{item.likes}}</div>       
+            {% endif %}
+        </div>
   
     {% endfor %}
 
