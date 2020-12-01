@@ -1,0 +1,19 @@
+{% extends 'network/layout.html' %}
+{% block body %}
+
+    <div id="create_post">
+        <form method="post" action="{% url 'edit' %}" id="post_form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="text" value="{{post.id}}" name="idd" style="display:none">
+            <textarea id="upload" name="content" placeholder="Your text here...">{% if post %}{{post.content}}{% endif %}</textarea><br>
+            {% if pic is not None %}
+                {% if pic.post == post %}
+                    <div class="image"><img src="{{pic.link}}"></div>
+                {% endif %}
+            {% endif %}
+            <input type="file" name="image">
+            <button type="Submit" class="btn btn-success post_submit">Submit</button>
+        </form>
+    </div>
+
+{% endblock %}

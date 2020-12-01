@@ -1,49 +1,143 @@
 {% extends "network/layout.html" %}
 {% block body %}
-	<h1 class="user_name">{{name}}</h1>
-	{{email}}
+	<div class="containeer">
+	    <div class="one">
+	        <img src="/media/person.svg" class="person"/>
+		    <div class="up">
+	    		<span class="user_name">{{name}}</span>
 
+			<!--Follow button-->
+		    	{% if me != profile %}
+					{% if profile in my_following %}
+						<button type="button" class="follow btn btn-primary" data-add="unollow">Unfollow</button>
+					{% else %}
+						<button type="button" class="follow btn btn-primary" data-add="follow">Follow</button>
+					{% endif %}
+				{% endif %}
 
-	<!--To display the following-->
-	<h2>Following</h2>
-	<ul>
-	{% for spam in following %}
-		<li>{{spam.username}}</li>
-	{% endfor %}
-	</ul>
+		    </div>
+		</div>
+		&emsp;&emsp;&emsp;&emsp;&emsp;{{email}}
 
-	<!--Floow button-->
-	{% if profile in my_following %}
-		<div class="follow" data-add="unollow">Unfollow</div>
-	{% else %}
-		<div class="follow" data-add="follow">Follow</div>
-	{% endif %}
+		<div class="container">
+			<div class="row">
 
-	<!--To display the followers-->
-	<h2>Followers</h2>
-	<ul>
-	{% for eggs in followers %}
-		<li>{{eggs.username}}</li>
-	{% endfor %}
-	</ul>
+				<div class="col here">
+					<!--To display the following-->
+					<span class="bundle"><span class="lists">Following</span> <span class="num">{{following|length}}</span></span>
+					<ul class="following">
+					{% for spam in following %}
+						<li class="follo"><a href="/profile/{{spam.username}}" class="fol">{{spam.username}}</a></li>
+					{% endfor %}
+					</ul>
+				</div>
 
-	{% for item in post %}
+				<div class="col here">
+					<!--To display the followers-->
+					<span class="bundle"><span class="lists">Followers</span> <span class="num">{{followers|length}}</span></span>
+					<ul class="followers">
+					{% for eggs in followers %}
+						<li class="follo"><a href="/profile/{{eggs.username}}" class="fol">{{eggs.username}}</a></li>
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<hr>
+
+	
+    {% for item in post %}
         <div class="post">
-        	<span style="display:None" id="post_id">{{item.id}}</span>
-        	<a href="/profile/{{item.creator}}">
-        		<span class="creator">{{item.creator}}</span>
-        	</a>
-        	{{item.content}}
-        	<div class="timestamp">{{item.timestamp}}</div>
-        	{%if item in my_liked%}
-        		<div class="actions" data-press="{{item.id}}" data-status="liked" id="liked">{{item.likes}}</div>
-        	{% else %}
-        		<div class="actions" data-press="{{item.id}}" data-status="not_liked" id="not_liked">{{item.likes}}</div>  		
-        	{% endif %}
+            <div class="one">
+                <span style="display:None" class="post_id">{{item.id}}</span>
+                <a href="/profile/{{item.creator}}">
+                    <img src="/media/person.svg" class="person"/>
+                </a>
+                <div class="up">
+                    <a href="/profile/{{item.creator}}">
+                        <span class="creator">{{item.creator}}</span>
+                    </a>
+                    <div class="timestamp">{{item.timestamp}}</div>
+                </div>
+            </div>
+
+            <div class="content">{{item.content}}<br>
+
+                <div class="image">
+                    {% for image in album %}
+                        {% for img in image %}
+                            {% if img.post == item %}
+                                <img src="{{img.link}}">
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+
+            </div>
+
+            <div class="container">
+                <div class="row post_actions">
+
+                    <div class="col" type="button" data-toogle="tooltip" data-placement="bottom" title="Like post">
+                        {%if item in my_liked%}
+                            <div class="actions liked" data-press="{{item.id}}" data-status="liked"><img src="/media/liked.svg" class="react"/>{{item.likes}}</div>
+                        {% else %}
+                            <div class="actions not_liked" data-press="{{item.id}}" data-status="not_liked"><img src="/media/not_liked.svg" class="react"/>
+                            {{item.likes}}</div>
+                        {% endif %}
+                    </div>
+
+                    <span class="col edit actions" type="button" data-toogle="tooltip" data-placement="bottom" title="Edit post">
+                        <a href="/edit/?psid={{item.id}}">
+                        <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-pencil-square" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456l-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                          <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                        </svg></a>
+                    </span>
+
+                    <span class="col delete actions" type="button" data-toogle="tooltip" data-placement="bottom" title="delete Post">
+                        <a href="/delete/{{item.id}}">
+                        <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-trash" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                        </svg></a>
+                    </span>
+                </div>
+            </div>
         </div>
-  
+        
     {% endfor %}
-    {% for me in my_liked %}
-    	{{me.id}}
-    {% endfor %}
+
+
+	<nav aria-label="Page navigation example">
+	  <ul class="pagination justify-content-center">
+	    {% if post.has_previous %}
+	    <li class="page-item">
+	      <a class="page-link" href="?page={{post.previous_page_number}}" aria-label="Previous">
+	        <span aria-hidden="true">&laquo;</span> Previous
+	      </a>
+	    </li>
+	    {% else %}
+	    <li class="page-item disabled">
+	      <a class="page-link" href="#" aria-label="Previous">
+	        <span aria-hidden="true">&laquo;</span> Previous
+	      </a>
+	    </li>
+	    {% endif %}
+	    {% if post.has_next %}
+	    <li class="page-item">
+	      <a class="page-link" href="?page={{post.next_page_number}}" aria-label="Next">Next
+	        <span aria-hidden="true">&raquo;</span>
+	      </a>
+	    </li>
+	    {% else %}
+	    <li class="page-item disabled">
+	      <a class="page-link" href="#" aria-label="Next">Next
+	        <span aria-hidden="true">&raquo;</span>
+	      </a>
+	    </li>
+	    {% endif %}
+	  </ul>
+	</nav>
 {% endblock %}

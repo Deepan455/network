@@ -2,25 +2,57 @@ from datetime import datetime
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, Http404
+from django.core.files.storage import FileSystemStorage
+from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User, Posts
+from .models import User, Posts, Image
+from .forms import Postform
 
+import os
 
 def index(request):
-    post = Posts.objects.all()
-    me=request.user.username
-    print("hello")
-    print(me)
-    person=User.objects.get(username=me)
-    my_liked=person.likers.all()
-    print(my_liked)
+    po = Posts.objects.all().order_by('-timestamp').reverse()
+    post = po.reverse()
+
+    my_liked=[]
+    if request.user.is_authenticated:
+        me=request.user.username
+        person=User.objects.get(username=me)
+        my_liked=person.likers.all()
+    p=Paginator(post,10) #Paginate to get 10 posts at a time
+    if request.GET.get('page'):
+        pgn=request.GET.get('page')
+        if (int(pgn)<=p.num_pages):
+            send=p.page(pgn)
+        else:
+            send=p.page(1)
+    else:
+        send=p.page(1)
+
+    #To include the images with the posts
+    album=[]
+    for thing in send:
+        pics=thing.pics.all()
+        album.append(pics)
+
     return render(request, "network/index.html",{
-        'post':reversed(post),
-        'my_liked':my_liked
-        })
+        'post':send,
+        'num':p.num_pages,
+        'my_liked':my_liked,
+        'album':album
+    })
+
+def all_posts(request):
+    po = Posts.objects.all().order_by('-timestamp').reverse()
+    post = po.reverse()
+
+    #Paginate to get 10 posts at a time
+    p=Paginator(post,10) 
+    send=p.page(1)
+
 
 def login_view(request):
     if request.method == "POST":
@@ -73,27 +105,53 @@ def register(request):
     else:
         return render(request, "network/register.html")
 
+
+#The primary post creation function
 def upload(request):
     if request.method == "POST":
-        content = request.POST['content']
-        person = request.user.username
-        creator = User.objects.get(username=person)
-        likes = "10"
-
+        me = request.user.username
+        creator = User.objects.get(username=me)
+        content=request.POST['content']
 
         #Trying to create a post
+        create_post = Posts.objects.create(creator=creator,content=content)
+        create_post.save()
         try:
-            create_post = Posts.objects.create(creator=creator,content=content,likes=likes)
-            create_post.save()
+            uploaded_image = request.FILES['image']
+            fs=FileSystemStorage()
+            filename=fs.save(uploaded_image.name,uploaded_image)
+            uploaded_file_url=fs.url(filename)
+            store_image= Image.objects.create(uploader=creator,post=create_post,link=uploaded_file_url)
+            store_image.save()
 
-        #Exception handling for failed post creation
         except Exception:
-           return HttpResponse('Error creating Post')
+            pass
 
-        return HttpResponseRedirect(reverse("index")) 
+        return HttpResponseRedirect(reverse("index"))
+
+    elif request.method == "GET":
+        form = Postform()
+        return render(request,"network/create.html",{
+            "form":form
+            })
+
     else:
         return HttpResponse('error')
 
+#To display individual post
+def post(request,psid):
+    me=request.user.username
+    person=User.objects.get(username=me)
+    post=Posts.objects.get(id=psid)
+    my_liked=person.likers.all()
+    album=post.pics.all()
+    return render(request,"network/post.html",{
+        "post":post,
+        "my_liked":my_liked,
+        "album":album
+        })
+
+#To display individual profile
 def profile(request,name):
     me=request.user.username
     person=User.objects.get(username=me)
@@ -104,17 +162,37 @@ def profile(request,name):
     following=pro.following.all()
     my_liked=person.likers.all()
     my_following=person.following.all()
+
+    p=Paginator(posts,10) #Paginate to get 10 posts at a time
+    if request.GET.get('page'):
+        pgn=request.GET.get('page')
+        if (int(pgn)<=p.num_pages):
+            send=p.page(pgn)
+        else:
+            send=p.page(1)
+    else:
+        send=p.page(1)
+
+    album=[]
+    for thing in send:
+        pics=thing.pics.all()
+        album.append(pics)
+
     return render(request,"network/profile.html",{
+        "me":person,
         "profile":pro,
         "name":name,
         "email":email,
-        "post":posts,
+        "post":send,
+        "num":p.num_pages,
         "followers":followers,
         "following":following,
         "my_liked":my_liked,
-        "my_following":my_following
+        "my_following":my_following,
+        "album":album
         })
 
+@login_required
 def following(request):
     me=request.user.username
     print (me)
@@ -131,12 +209,29 @@ def following(request):
             basket=basket | cheese
         n+=1
 
-    print(basket)
-    print(reversed(basket))
+    p=Paginator(basket,10) #Paginate to get 10 posts at a time
+    if request.GET.get('page'):
+        pgn=request.GET.get('page')
+        if (int(pgn)<=p.num_pages):
+            send=p.page(pgn)
+        else:
+            send=p.page(1)
+    else:
+        send=p.page(1)
+
+    album=[]
+    for thing in send:
+        pics=thing.pics.all()
+        album.append(pics)
+
     return render(request,"network/index.html",{
-        'post':reversed(basket),
-        'my_liked':my_liked
+        'post':reversed(send),
+        'num':p.num_pages,
+        'my_liked':my_liked,
+        "album":album
         })
+
+#Functions for API requests
 
 @login_required
 def follow(request,name):
@@ -182,21 +277,93 @@ def me(request):
         })
 
 @login_required
-def like(request,usid):
+def like(request,psid):
     me=request.user.username
     pro=User.objects.get(username=me)
-    post=Posts.objects.get(id=usid)
+    post=Posts.objects.get(id=psid)
     post.likes+=1
     post.likedby.add(pro)
     post.save()
     return JsonResponse({"message":"Added to liked videos","likes":post.likes})
 
 @login_required
-def unlike(request,usid):
+def unlike(request,psid):
     me=request.user.username
     pro=User.objects.get(username=me)
-    post=Posts.objects.get(id=usid)
+    post=Posts.objects.get(id=psid)
     post.likes-=1
     post.likedby.remove(pro)
     post.save()
     return JsonResponse({"message":"Removed from liked videos","likes":post.likes})
+
+
+@login_required
+def edit(request):
+    if request.method == "POST":
+        content = request.POST['content']
+        print(content)
+        me = request.user.username
+        creator = User.objects.get(username=me)
+        print (creator)
+        the_id = request.POST['content']
+        print(the_id)
+
+        #Trying to create a post
+        create_post,c = Posts.objects.update_or_create(creator=creator, content= content)
+        create_post.save()
+
+        try:
+            uploaded_image=request.FILES['image']
+            fs=FileSystemStorage()
+            filename=fs.save(uploaded_image.name,uploaded_image)
+            uploaded_file_url=fs.url(filename)
+            store_image= Image.objects.create(uploader=creator,post=create_post,link=uploaded_file_url)
+            store_image.save()
+
+        except Exception:
+            pass
+
+        #Exception handling for failed post creation
+
+        return HttpResponseRedirect(reverse("index"))
+
+    elif request.method=="GET":
+        me=request.user.username
+        pro=User.objects.get(username=me)
+        psid=request.GET['psid']
+        post=Posts.objects.get(id=psid)
+
+        try:
+            pic=Image.objects.get(post=post)
+        except:
+            pic=None
+
+        if (post.creator == pro):
+            return render(request,"network/edit.html",{
+                "profile":pro,
+                "post":post,
+                "pic":pic
+            })
+        else:
+            return HttpResponseRedirect(reverse("index"))
+
+    else:
+        raise Http404
+
+
+
+@login_required
+def delete(request,psid):
+    if request.method=="GET":
+        me=request.user.username
+        pro=User.objects.get(username=me)
+        post=Posts.objects.get(id=psid)
+        if (post.creator == pro):
+            pics=Image.objects.filter(post=post)
+            for pic in pics:
+                if os.path.exists(pic.link):
+                    os.remove(pic.link)
+            post.delete()
+            return HttpResponseRedirect(reverse("index"))
+        else:
+            return HttpResponseRedirect(reverse("index"))

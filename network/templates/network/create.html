@@ -1,0 +1,15 @@
+{% extends 'network/layout.html' %}
+{% block body %}
+    {% if message %}
+        {{message}}
+    {% endif %}
+    <div id="create_post">
+        <form method="post" action="{% url 'upload' %}" id="post_form" enctype="multipart/form-data">
+            <textarea id="upload" name="content" placeholder="Your text here...">{% if post %}{{post.content}}{% endif %}
+            </textarea><br>
+            <input type="file" name="image">
+            <button type="Submit" class="btn btn-success post_submit">Submit</button>
+        </form>
+    </div>
+
+{% endblock %}

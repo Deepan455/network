@@ -25,3 +25,18 @@ class Posts(models.Model):
 			"likes":self.likes,
 			"likedby":self.likedby
 		}
+
+class Image(models.Model):
+	uploader = models.ForeignKey("User", related_name="pics", on_delete=models.CASCADE)
+	post= models.ForeignKey("Posts", related_name="pics", on_delete=models.CASCADE)
+	link = models.CharField(blank=False, max_length=1000)
+	code = models.CharField(blank=False, max_length=200)
+
+	def __main__(self):
+		return{
+		"id":self.id,
+		"uploader":self.uploader,
+		"post":self.post,
+		"link":self.link,
+		"code":self.code
+		}

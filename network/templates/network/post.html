@@ -1,39 +1,26 @@
-{% extends "network/layout.html" %}
-
+{% extends 'network/layout.html' %}
 {% block body %}
-    <div id="create_post">
-        <form method="post" action="{% url 'upload' %}" id="post_form" enctype="multipart/form-data">
-            {% csrf_token %}
-            <textarea id="upload" name="content" placeholder="Your text here...">{% if post %}{{post.content}}{% endif%}</textarea><br>
-            <input type="file" name="image">
-            <button type="submit" class="btn btn-success post_submit">Submit</button>
-        </form>
-    </div>
-
-    {% for item in post %}
-        <div class="post">
+<div class="post">
             <div class="one">
-                <span style="display:None" class="post_id">{{item.id}}</span>
+                <span style="display:None" class="post_id">{{post.id}}</span>
                 <a href="/profile/{{item.creator}}">
                     <img src="/media/person.svg" class="person"/>
                 </a>
                 <div class="up">
                     <a href="/profile/{{item.creator}}">
-                        <span class="creator">{{item.creator}}</span>
+                        <span class="creator">{{post.creator}}</span>
                     </a>
-                    <div class="timestamp">{{item.timestamp}}</div>
+                    <div class="timestamp">{{post.timestamp}}</div>
                 </div>
             </div>
 
-            <div class="content">{{item.content}}<br>
+            <div class="content">{{post.content}}<br>
 
                 <div class="image">
                     {% for image in album %}
-                        {% for img in image %}
-                            {% if img.post == item %}
-                                <img src="{{img.link}}">
-                            {% endif %}
-                        {% endfor %}
+                        {% if image.post == post %}
+                            <img src="{{image.link}}">
+                        {% endif %}
                     {% endfor %}
                 </div>
 
@@ -44,10 +31,10 @@
 
                     <div class="col" type="button" data-toogle="tooltip" data-placement="bottom" title="Like post">
                         {%if item in my_liked%}
-                            <div class="actions liked" data-press="{{item.id}}" data-status="liked"><img src="/media/liked.svg" class="react"/>{{item.likes}}</div>
+                            <div class="actions liked" data-press="{{post.id}}" data-status="liked"><img src="/media/liked.svg" class="react"/>{{post.likes}}</div>
                         {% else %}
-                            <div class="actions not_liked" data-press="{{item.id}}" data-status="not_liked"><img src="/media/not_liked.svg" class="react"/>
-                            {{item.likes}}</div>
+                            <div class="actions not_liked" data-press="{{post.id}}" data-status="not_liked"><img src="/media/not_liked.svg" class="react"/>
+                            {{post.likes}}</div>
                         {% endif %}
                     </div>
 
@@ -69,38 +56,4 @@
                 </div>
             </div>
         </div>
-        
-    {% endfor %}
-
-
-    <nav aria-label="Page navigation example">
-      <ul class="pagination justify-content-center">
-        {% if post.has_previous %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{post.previous_page_number}}" aria-label="Previous">
-            <span aria-hidden="true">&laquo;</span> Previous
-          </a>
-        </li>
-        {% else %}
-        <li class="page-item disabled">
-          <a class="page-link" href="#" aria-label="Previous">
-            <span aria-hidden="true">&laquo;</span> Previous
-          </a>
-        </li>
-        {% endif %}
-        {% if post.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{post.next_page_number}}" aria-label="Next">Next
-            <span aria-hidden="true">&raquo;</span>
-          </a>
-        </li>
-        {% else %}
-        <li class="page-item disabled">
-          <a class="page-link" href="#" aria-label="Next">Next
-            <span aria-hidden="true">&raquo;</span>
-          </a>
-        </li>
-        {% endif %}
-      </ul>
-    </nav>
 {% endblock %}
