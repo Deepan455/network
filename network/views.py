@@ -301,15 +301,22 @@ def unlike(request,psid):
 def edit(request):
     if request.method == "POST":
         content = request.POST['content']
-        print(content)
         me = request.user.username
         creator = User.objects.get(username=me)
-        print (creator)
-        the_id = request.POST['content']
+        the_id = request.POST['idd']
         print(the_id)
 
+        post_old=Posts.objects.get(id=the_id)
+        back=post_old
+        try:
+            pic_old=post_old.pics.all().first()
+            pic_id=pic_old.id
+            print("Printid ==")
+            print(pic_id)
+        except:
+            pass
         #Trying to create a post
-        create_post,c = Posts.objects.update_or_create(creator=creator, content= content)
+        create_post = Posts.objects.create(creator=creator,content= content)
         create_post.save()
 
         try:
@@ -321,10 +328,20 @@ def edit(request):
             store_image.save()
 
         except Exception:
-            pass
+            try:
+                print("checkpoint pass")
+                print(create_post)
+                print(back)
+                store_image= Image.objects.get(post=back)
+                print(store_image)
+                store_image.post=create_post
+                print("this also")
+                store_image.save()
 
-        #Exception handling for failed post creation
+            except Exception:
+                pass
 
+        post_old.delete()
         return HttpResponseRedirect(reverse("index"))
 
     elif request.method=="GET":

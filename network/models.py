@@ -10,6 +10,7 @@ class User(AbstractUser):
     pass
 
 class Posts(models.Model):
+	id = models.AutoField(primary_key=True)
 	creator = models.ForeignKey("User",related_name="profile",on_delete=models.CASCADE)
 	content = models.CharField(blank=False, max_length=1000)
 	timestamp = models.DateTimeField(auto_now_add=True)
